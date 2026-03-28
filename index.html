@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finboo - AI 智能财务管家</title>
+    <meta name="description" content="AI驱动的智能财务管家，语音、拍照、打字三种方式记账，支持信用卡管理、投资追踪、多币种、智能预算。">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Sans+HK:wght@400;500;700&family=Poppins:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        navy: { 900: '#0F172A', 800: '#1E293B', 700: '#334155' },
+                        teal: { 500: '#14B8A6', 600: '#0F766E' },
+                        gold: { 500: '#F59E0B' }
+                    },
+                    fontFamily: {
+                        sans: ['Poppins', 'Noto Sans HK', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #2DD4BF, #38BDF8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .gradient-text-warm {
+            background: linear-gradient(135deg, #F59E0B, #EF4444);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .lang-dropdown {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            background: #1E293B;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0.5rem;
+            min-width: 120px;
+            z-index: 100;
+        }
+        .lang-btn:hover .lang-dropdown { display: block; }
+        .feature-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+        .step-line {
+            position: absolute;
+            top: 24px;
+            left: 50%;
+            width: calc(100% - 48px);
+            height: 2px;
+            background: linear-gradient(to right, #14B8A6, #38BDF8);
+            opacity: 0.3;
+        }
+        @media (max-width: 768px) {
+            .step-line { display: none; }
+        }
+        .mobile-menu { display: none; }
+        .mobile-menu.active { display: block; }
+    </style>
+    <script>
+        const TRANSLATIONS = {
+            zh: {
+                nav_features: "功能",
+                nav_howitworks: "使用方式",
+                nav_privacy: "隐私安全",
+                nav_download: "下载 App",
+                hero_badge: "AI 驱动 \u2022 7种语言",
+                hero_title_1: "说一句话",
+                hero_title_2: "AI帮你记好每一笔账",
+                hero_subtitle: "语音、拍照、打字，三种方式智能记账。信用卡、投资、多币种、预算，一个App全搞定。",
+                btn_appstore: "App Store 下载",
+                btn_learnmore: "了解更多",
+                hero_trust: "设备端语音识别 \u2022 本地OCR \u2022 隐私优先",
+                how_tag: "三步完成记账",
+                how_title: "记账从未如此简单",
+                how_step1_title: "说、拍、或打字",
+                how_step1_desc: "语音说\"午餐花了35\"、拍下外卖小票、或直接打字输入，任选其一。",
+                how_step2_title: "AI 智能解析",
+                how_step2_desc: "AI自动识别金额、分类、账户，信息不全时会像助理一样追问确认。",
+                how_step3_title: "一键确认",
+                how_step3_desc: "确认后自动记录，账户余额、信用卡待还金额同步更新，无需手动计算。",
+                ai_tag: "对话式AI记账",
+                ai_title: "像聊天一样管理财务",
+                ai_desc: "不只是简单记录，Finboo AI 理解你的意图。说\"招商信用卡消费200\"，自动匹配信用卡、记录消费、更新待还金额。提到不存在的账户？AI引导创建并自动补录交易。",
+                ai_f1: "语音实时转文字（Apple Speech）",
+                ai_f2: "7种票据OCR识别（Apple Vision）",
+                ai_f3: "智能消歧与多轮对话",
+                ai_f4: "自动匹配账户与信用卡",
+                feat_tag: "核心功能",
+                feat_title: "你需要的财务工具，全都在这里",
+                feat_subtitle: "从日常记账到投资追踪，从信用卡管理到跨境汇率，一站式覆盖。",
+                f1_title: "13种账户管理",
+                f1_desc: "银行卡、现金、数字钱包、信用卡、贷款、房贷、储蓄、加密货币、房产、车辆等，全方位资产管理。",
+                f2_title: "信用卡智能管家",
+                f2_desc: "每张卡独立消费记录，实时追踪待还金额。支持全额/最低自动还款，多来源扣款优先级。",
+                f3_title: "投资持仓追踪",
+                f3_desc: "股票、ETF、基金、债券、加密货币、期权。实时价格更新，自动计算盈亏与平均成本。",
+                f4_title: "15种货币支持",
+                f4_desc: "CNY、USD、EUR、JPY、HKD等15种主流货币，实时汇率自动转换，轻松记录海外消费。",
+                f5_title: "智能预算管理",
+                f5_desc: "按分类设置月度预算，超支即时提醒。收支统计报表，财务健康度评分一目了然。",
+                f6_title: "自动还款与收入",
+                f6_desc: "工资、公积金、租金自动入账；贷款、房贷、订阅自动扣款。余额不足时智能切换来源。",
+                privacy_tag: "隐私与安全",
+                privacy_title: "你的财务数据，只属于你",
+                privacy_subtitle: "我们把隐私保护放在产品设计的第一位。",
+                priv1_title: "设备端语音识别",
+                priv1_desc: "使用 Apple Speech Framework，语音在本地处理，录音不上传服务器。",
+                priv2_title: "本地票据OCR",
+                priv2_desc: "使用 Apple Vision Framework，小票识别完全在设备端完成。",
+                priv3_title: "Apple 登录",
+                priv3_desc: "支持 Sign in with Apple，无需额外注册，保护你的身份信息。",
+                priv4_title: "数据隔离",
+                priv4_desc: "所有数据通过用户ID严格隔离，你的财务信息只有你能看到。",
+                lang_title: "支持7种语言",
+                lang_desc: "中文 \u2022 English \u2022 日本語 \u2022 한국어 \u2022 Fran\u00e7ais \u2022 Deutsch \u2022 Espa\u00f1ol",
+                cta_title_1: "准备好让AI帮你管好每一笔钱了吗？",
+                cta_title_2: "立即下载 Finboo。",
+                cta_desc: "免费开始使用，体验AI智能记账的便捷。",
+                cta_btn: "免费下载",
+                footer_copyright: "\u00a9 2025 Finboo. 保留所有权利。",
+                footer_privacy: "隐私政策",
+                footer_terms: "使用条款",
+                footer_support: "帮助与支持"
+            },
+            en: {
+                nav_features: "Features",
+                nav_howitworks: "How It Works",
+                nav_privacy: "Privacy",
+                nav_download: "Download App",
+                hero_badge: "AI-Powered \u2022 7 Languages",
+                hero_title_1: "Just Say It.",
+                hero_title_2: "AI Tracks Every Transaction.",
+                hero_subtitle: "Voice, photo, or text \u2014 three ways to smart bookkeeping. Credit cards, investments, multi-currency, budgets \u2014 all in one app.",
+                btn_appstore: "Download on App Store",
+                btn_learnmore: "Learn More",
+                hero_trust: "On-Device Voice Recognition \u2022 Local OCR \u2022 Privacy First",
+                how_tag: "Three Simple Steps",
+                how_title: "Bookkeeping Has Never Been Easier",
+                how_step1_title: "Speak, Snap, or Type",
+                how_step1_desc: "Say \"lunch cost $12\", snap a receipt photo, or just type it in \u2014 your choice.",
+                how_step2_title: "AI Parses Instantly",
+                how_step2_desc: "AI detects amount, category, and account. Asks follow-up questions when details are missing.",
+                how_step3_title: "One-Tap Confirm",
+                how_step3_desc: "Confirm and it\u2019s done. Account balances and credit card bills update automatically.",
+                ai_tag: "Conversational AI",
+                ai_title: "Manage Finances Like a Chat",
+                ai_desc: "More than simple logging. Say \"$200 on Chase credit card\" and Finboo matches the card, logs the expense, and updates the outstanding balance. Mention a new account? AI guides you to create it and auto-links pending transactions.",
+                ai_f1: "Real-time voice-to-text (Apple Speech)",
+                ai_f2: "7 receipt types OCR (Apple Vision)",
+                ai_f3: "Smart disambiguation & multi-turn dialog",
+                ai_f4: "Auto-match accounts & credit cards",
+                feat_tag: "Core Features",
+                feat_title: "Every Financial Tool You Need",
+                feat_subtitle: "From daily expenses to investment tracking, credit card management to cross-border exchange rates.",
+                f1_title: "13 Account Types",
+                f1_desc: "Bank, cash, digital wallet, credit card, loan, mortgage, savings, crypto, property, vehicle, and more.",
+                f2_title: "Credit Card Manager",
+                f2_desc: "Per-card spending records, real-time balance tracking. Full or minimum auto-payment with multi-source priority.",
+                f3_title: "Investment Tracking",
+                f3_desc: "Stocks, ETFs, funds, bonds, crypto, options. Real-time prices, automatic P&L and average cost calculation.",
+                f4_title: "15 Currencies",
+                f4_desc: "USD, EUR, GBP, JPY, CNY, HKD and more. Real-time exchange rates, effortless overseas expense logging.",
+                f5_title: "Smart Budgets",
+                f5_desc: "Monthly budgets by category with overspend alerts. Spending analytics and financial health scoring.",
+                f6_title: "Auto Pay & Income",
+                f6_desc: "Auto-record salary, housing fund, rental income. Auto-pay loans, mortgages, subscriptions with smart fallback.",
+                privacy_tag: "Privacy & Security",
+                privacy_title: "Your Financial Data Stays Yours",
+                privacy_subtitle: "Privacy by design \u2014 built into every layer of the product.",
+                priv1_title: "On-Device Voice",
+                priv1_desc: "Apple Speech Framework processes voice locally. No audio is uploaded to any server.",
+                priv2_title: "Local OCR",
+                priv2_desc: "Apple Vision Framework scans receipts entirely on-device. Your bills never leave your phone.",
+                priv3_title: "Sign in with Apple",
+                priv3_desc: "No extra registration needed. Your identity stays protected with Apple\u2019s privacy standards.",
+                priv4_title: "Data Isolation",
+                priv4_desc: "All data is strictly isolated by user ID. Your finances are visible only to you.",
+                lang_title: "7 Languages Supported",
+                lang_desc: "English \u2022 \u4e2d\u6587 \u2022 \u65e5\u672c\u8a9e \u2022 \ud55c\uad6d\uc5b4 \u2022 Fran\u00e7ais \u2022 Deutsch \u2022 Espa\u00f1ol",
+                cta_title_1: "Ready to let AI manage your money?",
+                cta_title_2: "Download Finboo now.",
+                cta_desc: "Start for free. Experience the ease of AI-powered bookkeeping.",
+                cta_btn: "Download Free",
+                footer_copyright: "\u00a9 2025 Finboo. All rights reserved.",
+                footer_privacy: "Privacy Policy",
+                footer_terms: "Terms of Service",
+                footer_support: "Help & Support"
+            },
+            ja: {
+                nav_features: "\u6a5f\u80fd",
+                nav_howitworks: "\u4f7f\u3044\u65b9",
+                nav_privacy: "\u30d7\u30e9\u30a4\u30d0\u30b7\u30fc",
+                nav_download: "\u30a2\u30d7\u30eaDL",
+                hero_badge: "AI\u642d\u8f09 \u2022 7\u8a00\u8a9e\u5bfe\u5fdc",
+                hero_title_1: "\u4e00\u8a00\u3067OK\u3002",
+                hero_title_2: "AI\u304c\u5bb6\u8a08\u3092\u8a18\u9332\u3002",
+                hero_subtitle: "\u97f3\u58f0\u30fb\u5199\u771f\u30fb\u30c6\u30ad\u30b9\u30c8\u306e3\u3064\u306e\u65b9\u6cd5\u3067\u30b9\u30de\u30fc\u30c8\u8a18\u5e33\u3002\u30af\u30ec\u30b8\u30c3\u30c8\u30ab\u30fc\u30c9\u30fb\u6295\u8cc7\u30fb\u591a\u901a\u8ca8\u30fb\u4e88\u7b97\u3092\u4e00\u5143\u7ba1\u7406\u3002",
+                btn_appstore: "App Store",
+                btn_learnmore: "\u8a73\u7d30",
+                hero_trust: "\u7aef\u672b\u5185\u97f3\u58f0\u8a8d\u8b58 \u2022 \u30ed\u30fc\u30ab\u30ebOCR \u2022 \u30d7\u30e9\u30a4\u30d0\u30b7\u30fc\u512a\u5148",
+                how_tag: "3\u30b9\u30c6\u30c3\u30d7\u3067\u5b8c\u4e86",
+                how_title: "\u8a18\u5e33\u304c\u3053\u3093\u306a\u306b\u7c21\u5358\u306b",
+                how_step1_title: "\u8a71\u3059\u30fb\u64ae\u308b\u30fb\u6253\u3064",
+                how_step1_desc: "\u300c\u30e9\u30f3\u30c1500\u5186\u300d\u3068\u8a71\u3059\u3001\u30ec\u30b7\u30fc\u30c8\u3092\u64ae\u5f71\u3001\u307e\u305f\u306f\u30c6\u30ad\u30b9\u30c8\u5165\u529b\u3002",
+                how_step2_title: "AI\u304c\u89e3\u6790",
+                how_step2_desc: "AI\u304c\u91d1\u984d\u30fb\u30ab\u30c6\u30b4\u30ea\u30fc\u30fb\u53e3\u5ea7\u3092\u81ea\u52d5\u8b58\u5225\u3002\u4e0d\u660e\u70b9\u306f\u78ba\u8a8d\u3002",
+                how_step3_title: "\u30ef\u30f3\u30bf\u30c3\u30d7\u78ba\u8a8d",
+                how_step3_desc: "\u78ba\u8a8d\u3059\u308b\u3060\u3051\u3067\u5b8c\u4e86\u3002\u6b8b\u9ad8\u3082\u81ea\u52d5\u66f4\u65b0\u3002",
+                ai_tag: "\u5bfe\u8a71\u578bAI",
+                ai_title: "\u30c1\u30e3\u30c3\u30c8\u3067\u5bb6\u8a08\u7ba1\u7406",
+                ai_desc: "\u300c\u4e09\u4e95\u4f4f\u53cb\u30ab\u30fc\u30c9\u30672\u4e07\u5186\u300d\u3068\u8a00\u3046\u3060\u3051\u3067\u3001\u30ab\u30fc\u30c9\u7167\u5408\u30fb\u652f\u51fa\u8a18\u9332\u30fb\u6b8b\u9ad8\u66f4\u65b0\u3092\u81ea\u52d5\u5b9f\u884c\u3002",
+                ai_f1: "\u30ea\u30a2\u30eb\u30bf\u30a4\u30e0\u97f3\u58f0\u8a8d\u8b58",
+                ai_f2: "7\u7a2e\u985e\u306e\u30ec\u30b7\u30fc\u30c8OCR",
+                ai_f3: "\u30b9\u30de\u30fc\u30c8\u306a\u66d6\u6627\u6027\u89e3\u6d88",
+                ai_f4: "\u53e3\u5ea7\u30fb\u30ab\u30fc\u30c9\u81ea\u52d5\u30de\u30c3\u30c1",
+                feat_tag: "\u30b3\u30a2\u6a5f\u80fd",
+                feat_title: "\u5fc5\u8981\u306a\u8ca1\u52d9\u30c4\u30fc\u30eb\u304c\u5168\u3066\u63c3\u3046",
+                feat_subtitle: "\u65e5\u5e38\u306e\u652f\u51fa\u304b\u3089\u6295\u8cc7\u7ba1\u7406\u307e\u3067\u3001\u30aa\u30fc\u30eb\u30a4\u30f3\u30ef\u30f3\u3002",
+                f1_title: "13\u7a2e\u306e\u53e3\u5ea7\u7ba1\u7406",
+                f1_desc: "\u9280\u884c\u30fb\u73fe\u91d1\u30fb\u96fb\u5b50\u30de\u30cd\u30fc\u30fb\u30af\u30ec\u30ab\u30fb\u30ed\u30fc\u30f3\u30fb\u4e0d\u52d5\u7523\u306a\u3069\u3002",
+                f2_title: "\u30af\u30ec\u30b8\u30c3\u30c8\u30ab\u30fc\u30c9\u7ba1\u7406",
+                f2_desc: "\u30ab\u30fc\u30c9\u5225\u306e\u5229\u7528\u660e\u7d30\u3001\u6b8b\u9ad8\u8ffd\u8de1\u3001\u81ea\u52d5\u5f15\u304d\u843d\u3068\u3057\u5bfe\u5fdc\u3002",
+                f3_title: "\u6295\u8cc7\u30dd\u30fc\u30c8\u30d5\u30a9\u30ea\u30aa",
+                f3_desc: "\u682a\u5f0f\u30fbETF\u30fb\u6295\u4fe1\u30fb\u50b5\u5238\u30fb\u6697\u53f7\u8cc7\u7523\u3002\u30ea\u30a2\u30eb\u30bf\u30a4\u30e0\u4fa1\u683c\u66f4\u65b0\u3002",
+                f4_title: "15\u901a\u8ca8\u5bfe\u5fdc",
+                f4_desc: "JPY\u30fbUSD\u30fbEUR\u30fbCNY\u306a\u30691\u0035\u901a\u8ca8\u3002\u30ea\u30a2\u30eb\u30bf\u30a4\u30e0\u70ba\u66ff\u30ec\u30fc\u30c8\u3002",
+                f5_title: "\u30b9\u30de\u30fc\u30c8\u4e88\u7b97",
+                f5_desc: "\u30ab\u30c6\u30b4\u30ea\u30fc\u5225\u306e\u6708\u4e88\u7b97\u3001\u8d85\u904e\u30a2\u30e9\u30fc\u30c8\u3001\u5065\u5168\u5ea6\u30b9\u30b3\u30a2\u3002",
+                f6_title: "\u81ea\u52d5\u5f15\u304d\u843d\u3068\u3057\u30fb\u53ce\u5165",
+                f6_desc: "\u7d66\u4e0e\u30fb\u5e74\u91d1\u30fb\u5bb6\u8cc3\u81ea\u52d5\u8a18\u9332\u3002\u30ed\u30fc\u30f3\u30fb\u30b5\u30d6\u30b9\u30af\u81ea\u52d5\u5f15\u843d\u3002",
+                privacy_tag: "\u30d7\u30e9\u30a4\u30d0\u30b7\u30fc",
+                privacy_title: "\u3042\u306a\u305f\u306e\u8ca1\u52d9\u30c7\u30fc\u30bf\u306f\u3042\u306a\u305f\u3060\u3051\u306e\u3082\u306e",
+                privacy_subtitle: "\u30d7\u30e9\u30a4\u30d0\u30b7\u30fc\u30d0\u30a4\u30c7\u30b6\u30a4\u30f3\u3002\u88fd\u54c1\u306e\u3042\u3089\u3086\u308b\u5c64\u306b\u7d44\u307f\u8fbc\u307e\u308c\u3066\u3044\u307e\u3059\u3002",
+                priv1_title: "\u7aef\u672b\u5185\u97f3\u58f0\u8a8d\u8b58",
+                priv1_desc: "Apple Speech Framework\u3067\u30ed\u30fc\u30ab\u30eb\u51e6\u7406\u3002\u97f3\u58f0\u306f\u30a2\u30c3\u30d7\u30ed\u30fc\u30c9\u3055\u308c\u307e\u305b\u3093\u3002",
+                priv2_title: "\u30ed\u30fc\u30ab\u30ebOCR",
+                priv2_desc: "Apple Vision Framework\u3067\u30ec\u30b7\u30fc\u30c8\u3092\u7aef\u672b\u5185\u8a8d\u8b58\u3002",
+                priv3_title: "Apple\u30ed\u30b0\u30a4\u30f3",
+                priv3_desc: "\u8ffd\u52a0\u767b\u9332\u4e0d\u8981\u3002Apple\u306e\u30d7\u30e9\u30a4\u30d0\u30b7\u30fc\u57fa\u6e96\u3067\u4fdd\u8b77\u3002",
+                priv4_title: "\u30c7\u30fc\u30bf\u5206\u96e2",
+                priv4_desc: "\u5168\u30c7\u30fc\u30bf\u306f\u30e6\u30fc\u30b6\u30fcID\u3067\u53b3\u5bc6\u306b\u5206\u96e2\u3002\u3042\u306a\u305f\u3060\u3051\u304c\u95b2\u89a7\u53ef\u80fd\u3002",
+                lang_title: "7\u8a00\u8a9e\u5bfe\u5fdc",
+                lang_desc: "\u65e5\u672c\u8a9e \u2022 English \u2022 \u4e2d\u6587 \u2022 \ud55c\uad6d\uc5b4 \u2022 Fran\u00e7ais \u2022 Deutsch \u2022 Espa\u00f1ol",
+                cta_title_1: "AI\u306b\u5bb6\u8a08\u7ba1\u7406\u3092\u4efb\u305b\u3066\u307f\u307e\u305b\u3093\u304b\uff1f",
+                cta_title_2: "\u4eca\u3059\u3050Finboo\u3092\u30c0\u30a6\u30f3\u30ed\u30fc\u30c9\u3002",
+                cta_desc: "\u7121\u6599\u3067\u59cb\u3081\u3089\u308c\u307e\u3059\u3002AI\u30b9\u30de\u30fc\u30c8\u8a18\u5e33\u3092\u4f53\u9a13\u3002",
+                cta_btn: "\u7121\u6599\u30c0\u30a6\u30f3\u30ed\u30fc\u30c9",
+                footer_copyright: "\u00a9 2025 Finboo. All rights reserved.",
+                footer_privacy: "\u30d7\u30e9\u30a4\u30d0\u30b7\u30fc\u30dd\u30ea\u30b7\u30fc",
+                footer_terms: "\u5229\u7528\u898f\u7d04",
+                footer_support: "\u30d8\u30eb\u30d7"
+            },
+            ko: {
+                nav_features: "\uae30\ub2a5",
+                nav_howitworks: "\uc0ac\uc6a9\ubc95",
+                nav_privacy: "\uac1c\uc778\uc815\ubcf4",
+                nav_download: "\uc571 \ub2e4\uc6b4\ub85c\ub4dc",
+                hero_badge: "AI \uae30\ubc18 \u2022 7\uac1c \uc5b8\uc5b4",
+                hero_title_1: "\ud55c \ub9c8\ub514\uba74 \ub05d.",
+                hero_title_2: "AI\uac00 \uac00\uacc4\ubd80\ub97c \uae30\ub85d\ud569\ub2c8\ub2e4.",
+                hero_subtitle: "\uc74c\uc131\u00b7\uc0ac\uc9c4\u00b7\ud14d\uc2a4\ud2b8 3\uac00\uc9c0 \ubc29\ubc95\uc73c\ub85c \uc2a4\ub9c8\ud2b8 \uac00\uacc4\ubd80. \uc2e0\uc6a9\uce74\ub4dc\u00b7\ud22c\uc790\u00b7\ub2e4\ud1b5\ud654\u00b7\uc608\uc0b0 \ud1b5\ud569 \uad00\ub9ac.",
+                btn_appstore: "App Store",
+                btn_learnmore: "\uc790\uc138\ud788",
+                hero_trust: "\uae30\uae30 \ub0b4 \uc74c\uc131\uc778\uc2dd \u2022 \ub85c\uceec OCR \u2022 \uac1c\uc778\uc815\ubcf4 \uc6b0\uc120",
+                how_tag: "3\ub2e8\uacc4\ub85c \uc644\ub8cc",
+                how_title: "\uac00\uacc4\ubd80\uac00 \uc774\ub807\uac8c \uc26c\uc6e0\ub098\uc694",
+                how_step1_title: "\ub9d0\ud558\uac70\ub098 \ucc0d\uac70\ub098 \uc785\ub825",
+                how_step1_desc: "\"\uc810\uc2ec 12,000\uc6d0\"\uc774\ub77c\uace0 \ub9d0\ud558\uac70\ub098 \uc601\uc218\uc99d \ucd2c\uc601 \ub610\ub294 \ud14d\uc2a4\ud2b8 \uc785\ub825.",
+                how_step2_title: "AI \ubd84\uc11d",
+                how_step2_desc: "AI\uac00 \uae08\uc561\u00b7\uce74\ud14c\uace0\ub9ac\u00b7\uacc4\uc88c\ub97c \uc790\ub3d9 \uc778\uc2dd. \ubd80\uc871\ud55c \uc815\ubcf4\ub294 \ucd94\uac00 \uc9c8\ubb38.",
+                how_step3_title: "\uc6d0\ud0ed \ud655\uc778",
+                how_step3_desc: "\ud655\uc778\ub9cc \ud558\uba74 \ub05d. \uacc4\uc88c \uc794\uc561\uacfc \uce74\ub4dc \uccad\uad6c\uc561\uc774 \uc790\ub3d9 \uc5c5\ub370\uc774\ud2b8.",
+                ai_tag: "\ub300\ud654\ud615 AI",
+                ai_title: "\ucc44\ud305\uc73c\ub85c \uc7ac\ubb34 \uad00\ub9ac",
+                ai_desc: "\"\uc0bc\uc131\uce74\ub4dc\ub85c 20\ub9cc\uc6d0 \uacb0\uc81c\"\ub77c\uace0 \ud558\uba74 \uce74\ub4dc \ub9e4\uce6d\u00b7\uc9c0\ucd9c \uae30\ub85d\u00b7\uccad\uad6c\uc561 \uc5c5\ub370\uc774\ud2b8\uae4c\uc9c0 \uc790\ub3d9.",
+                ai_f1: "\uc2e4\uc2dc\uac04 \uc74c\uc131\uc778\uc2dd",
+                ai_f2: "7\uc885 \uc601\uc218\uc99d OCR",
+                ai_f3: "\uc2a4\ub9c8\ud2b8 \ubaa8\ud638\uc131 \ud574\uc18c",
+                ai_f4: "\uacc4\uc88c\u00b7\uce74\ub4dc \uc790\ub3d9 \ub9e4\uce6d",
+                feat_tag: "\ud575\uc2ec \uae30\ub2a5",
+                feat_title: "\ud544\uc694\ud55c \uc7ac\ubb34 \ub3c4\uad6c\uac00 \ubaa8\ub450 \uc5ec\uae30\uc5d0",
+                feat_subtitle: "\uc77c\uc0c1 \uc9c0\ucd9c\ubd80\ud130 \ud22c\uc790 \uad00\ub9ac\uae4c\uc9c0 \ud558\ub098\uc758 \uc571\uc73c\ub85c.",
+                f1_title: "13\uc885 \uacc4\uc88c \uad00\ub9ac",
+                f1_desc: "\uc740\ud589\u00b7\ud604\uae08\u00b7\uc804\uc790\uc9c0\uac11\u00b7\uc2e0\uc6a9\uce74\ub4dc\u00b7\ub300\ucd9c\u00b7\ubd80\ub3d9\uc0b0 \ub4f1 \ud1b5\ud569 \uad00\ub9ac.",
+                f2_title: "\uc2e0\uc6a9\uce74\ub4dc \uad00\ub9ac",
+                f2_desc: "\uce74\ub4dc\ubcc4 \uc0ac\uc6a9 \ub0b4\uc5ed, \uccad\uad6c\uc561 \ucd94\uc801, \uc790\ub3d9 \uacb0\uc81c \uc9c0\uc6d0.",
+                f3_title: "\ud22c\uc790 \ud3ec\ud2b8\ud3f4\ub9ac\uc624",
+                f3_desc: "\uc8fc\uc2dd\u00b7ETF\u00b7\ud380\ub4dc\u00b7\ucc44\uad8c\u00b7\uc554\ud638\ud654\ud3d0. \uc2e4\uc2dc\uac04 \uac00\uaca9 \uc5c5\ub370\uc774\ud2b8.",
+                f4_title: "15\uac1c \ud1b5\ud654 \uc9c0\uc6d0",
+                f4_desc: "KRW\u00b7USD\u00b7EUR\u00b7JPY \ub4f1 15\uac1c \ud1b5\ud654. \uc2e4\uc2dc\uac04 \ud658\uc728 \uc790\ub3d9 \ubcc0\ud658.",
+                f5_title: "\uc2a4\ub9c8\ud2b8 \uc608\uc0b0",
+                f5_desc: "\uce74\ud14c\uace0\ub9ac\ubcc4 \uc6d4 \uc608\uc0b0, \ucd08\uacfc \uc54c\ub9bc, \uac74\uc804\uc131 \uc810\uc218.",
+                f6_title: "\uc790\ub3d9 \uacb0\uc81c \u0026 \uc218\uc785",
+                f6_desc: "\uae09\uc5ec\u00b7\uc5f0\uae08\u00b7\uc784\ub300\uc218\uc785 \uc790\ub3d9 \uae30\ub85d. \ub300\ucd9c\u00b7\uad6c\ub3c5 \uc790\ub3d9 \uacb0\uc81c.",
+                privacy_tag: "\uac1c\uc778\uc815\ubcf4 \ubcf4\ud638",
+                privacy_title: "\ub2f9\uc2e0\uc758 \uc7ac\ubb34 \ub370\uc774\ud130\ub294 \ub2f9\uc2e0\ub9cc\uc758 \uac83",
+                privacy_subtitle: "\ud504\ub77c\uc774\ubc84\uc2dc \ubc14\uc774 \ub514\uc790\uc778 \u2014 \uc81c\ud488\uc758 \ubaa8\ub4e0 \uacc4\uce35\uc5d0 \ub0b4\uc7a5.",
+                priv1_title: "\uae30\uae30 \ub0b4 \uc74c\uc131\uc778\uc2dd",
+                priv1_desc: "Apple Speech Framework\ub85c \ub85c\uceec \ucc98\ub9ac. \uc74c\uc131 \uc5c5\ub85c\ub4dc \uc5c6\uc74c.",
+                priv2_title: "\ub85c\uceec OCR",
+                priv2_desc: "Apple Vision Framework\ub85c \uc601\uc218\uc99d \uae30\uae30 \ub0b4 \uc778\uc2dd.",
+                priv3_title: "Apple \ub85c\uadf8\uc778",
+                priv3_desc: "\ucd94\uac00 \uac00\uc785 \ubd88\ud544\uc694. Apple \uac1c\uc778\uc815\ubcf4 \uae30\uc900\uc73c\ub85c \ubcf4\ud638.",
+                priv4_title: "\ub370\uc774\ud130 \uaca9\ub9ac",
+                priv4_desc: "\ubaa8\ub4e0 \ub370\uc774\ud130\ub294 \uc0ac\uc6a9\uc790 ID\ub85c \uc5c4\uaca9\ud788 \uaca9\ub9ac.",
+                lang_title: "7\uac1c \uc5b8\uc5b4 \uc9c0\uc6d0",
+                lang_desc: "\ud55c\uad6d\uc5b4 \u2022 English \u2022 \u4e2d\u6587 \u2022 \u65e5\u672c\u8a9e \u2022 Fran\u00e7ais \u2022 Deutsch \u2022 Espa\u00f1ol",
+                cta_title_1: "AI\uc5d0\uac8c \uac00\uacc4 \uad00\ub9ac\ub97c \ub9e1\uae38 \uc900\ube44\uac00 \ub418\uc168\ub098\uc694?",
+                cta_title_2: "\uc9c0\uae08 Finboo\ub97c \ub2e4\uc6b4\ub85c\ub4dc\ud558\uc138\uc694.",
+                cta_desc: "\ubb34\ub8cc\ub85c \uc2dc\uc791\ud558\uc138\uc694. AI \uc2a4\ub9c8\ud2b8 \uac00\uacc4\ubd80\ub97c \uacbd\ud5d8\ud574\ubcf4\uc138\uc694.",
+                cta_btn: "\ubb34\ub8cc \ub2e4\uc6b4\ub85c\ub4dc",
+                footer_copyright: "\u00a9 2025 Finboo. All rights reserved.",
+                footer_privacy: "\uac1c\uc778\uc815\ubcf4\ucc98\ub9ac\ubc29\uce68",
+                footer_terms: "\uc774\uc6a9\uc57d\uad00",
+                footer_support: "\ub3c4\uc6c0\ub9d0"
+            },
+            fr: {
+                nav_features: "Fonctions",
+                nav_howitworks: "Comment \u00e7a marche",
+                nav_privacy: "Confidentialit\u00e9",
+                nav_download: "T\u00e9l\u00e9charger",
+                hero_badge: "Propuls\u00e9 par IA \u2022 7 langues",
+                hero_title_1: "Dites-le simplement.",
+                hero_title_2: "L\u2019IA enregistre tout.",
+                hero_subtitle: "Voix, photo ou texte \u2014 trois fa\u00e7ons de comptabiliser. Cartes de cr\u00e9dit, investissements, multidevise, budgets \u2014 tout en une app.",
+                btn_appstore: "App Store",
+                btn_learnmore: "En savoir plus",
+                hero_trust: "Reconnaissance vocale locale \u2022 OCR local \u2022 Confidentialit\u00e9 d\u2019abord",
+                how_tag: "Trois \u00e9tapes simples",
+                how_title: "La comptabilit\u00e9 n\u2019a jamais \u00e9t\u00e9 aussi simple",
+                how_step1_title: "Parlez, photographiez ou tapez",
+                how_step1_desc: "Dites \u00ab d\u00e9jeuner 12\u20ac \u00bb, prenez un re\u00e7u en photo, ou tapez directement.",
+                how_step2_title: "L\u2019IA analyse",
+                how_step2_desc: "L\u2019IA d\u00e9tecte montant, cat\u00e9gorie et compte. Pose des questions si n\u00e9cessaire.",
+                how_step3_title: "Confirmez en un tap",
+                how_step3_desc: "Confirmez et c\u2019est fait. Soldes et factures de cartes mis \u00e0 jour automatiquement.",
+                ai_tag: "IA Conversationnelle",
+                ai_title: "G\u00e9rez vos finances en discutant",
+                ai_desc: "Dites \u00ab 200\u20ac sur la carte Visa \u00bb et Finboo identifie la carte, enregistre la d\u00e9pense et met \u00e0 jour le solde.",
+                ai_f1: "Reconnaissance vocale temps r\u00e9el",
+                ai_f2: "OCR 7 types de re\u00e7us",
+                ai_f3: "D\u00e9sambigu\u00efsation intelligente",
+                ai_f4: "Correspondance auto comptes & cartes",
+                feat_tag: "Fonctions cl\u00e9s",
+                feat_title: "Tous les outils financiers dont vous avez besoin",
+                feat_subtitle: "Des d\u00e9penses quotidiennes au suivi d\u2019investissements, tout est couvert.",
+                f1_title: "13 types de comptes",
+                f1_desc: "Banque, esp\u00e8ces, portefeuille num\u00e9rique, carte de cr\u00e9dit, pr\u00eat, hypoth\u00e8que, \u00e9pargne, crypto et plus.",
+                f2_title: "Gestionnaire de cartes",
+                f2_desc: "D\u00e9penses par carte, suivi du solde, paiement auto complet ou minimum.",
+                f3_title: "Suivi d\u2019investissements",
+                f3_desc: "Actions, ETF, fonds, obligations, crypto, options. Prix en temps r\u00e9el.",
+                f4_title: "15 devises",
+                f4_desc: "EUR, USD, GBP, JPY, CNY et plus. Taux de change en temps r\u00e9el.",
+                f5_title: "Budgets intelligents",
+                f5_desc: "Budgets mensuels par cat\u00e9gorie, alertes de d\u00e9passement, score de sant\u00e9 financi\u00e8re.",
+                f6_title: "Paiements & revenus auto",
+                f6_desc: "Salaire, pension, loyer auto-enregistr\u00e9s. Pr\u00eats et abonnements auto-d\u00e9bit\u00e9s.",
+                privacy_tag: "Confidentialit\u00e9",
+                privacy_title: "Vos donn\u00e9es financi\u00e8res restent les v\u00f4tres",
+                privacy_subtitle: "Confidentialit\u00e9 par conception \u2014 int\u00e9gr\u00e9e \u00e0 chaque niveau.",
+                priv1_title: "Voix locale",
+                priv1_desc: "Apple Speech Framework traite la voix localement. Aucun audio envoy\u00e9.",
+                priv2_title: "OCR local",
+                priv2_desc: "Apple Vision Framework scanne les re\u00e7us enti\u00e8rement sur l\u2019appareil.",
+                priv3_title: "Connexion Apple",
+                priv3_desc: "Pas d\u2019inscription suppl\u00e9mentaire. Prot\u00e9g\u00e9 par les standards Apple.",
+                priv4_title: "Isolation des donn\u00e9es",
+                priv4_desc: "Toutes les donn\u00e9es sont strictement isol\u00e9es par utilisateur.",
+                lang_title: "7 langues",
+                lang_desc: "Fran\u00e7ais \u2022 English \u2022 \u4e2d\u6587 \u2022 \u65e5\u672c\u8a9e \u2022 \ud55c\uad6d\uc5b4 \u2022 Deutsch \u2022 Espa\u00f1ol",
+                cta_title_1: "Pr\u00eat \u00e0 laisser l\u2019IA g\u00e9rer vos finances ?",
+                cta_title_2: "T\u00e9l\u00e9chargez Finboo maintenant.",
+                cta_desc: "Commencez gratuitement. D\u00e9couvrez la comptabilit\u00e9 intelligente.",
+                cta_btn: "T\u00e9l\u00e9chargement gratuit",
+                footer_copyright: "\u00a9 2025 Finboo. Tous droits r\u00e9serv\u00e9s.",
+                footer_privacy: "Politique de confidentialit\u00e9",
+                footer_terms: "Conditions d\u2019utilisation",
+                footer_support: "Aide & Support"
+            },
+            de: {
+                nav_features: "Funktionen",
+                nav_howitworks: "So funktioniert\u2019s",
+                nav_privacy: "Datenschutz",
+                nav_download: "App laden",
+                hero_badge: "KI-gest\u00fctzt \u2022 7 Sprachen",
+                hero_title_1: "Einfach sagen.",
+                hero_title_2: "KI erfasst alles.",
+                hero_subtitle: "Sprache, Foto oder Text \u2014 drei Wege zur smarten Buchhaltung. Kreditkarten, Investments, Multi-W\u00e4hrung, Budgets \u2014 alles in einer App.",
+                btn_appstore: "App Store",
+                btn_learnmore: "Mehr erfahren",
+                hero_trust: "Ger\u00e4te-Spracherkennung \u2022 Lokale OCR \u2022 Datenschutz zuerst",
+                how_tag: "Drei einfache Schritte",
+                how_title: "Buchhaltung war nie einfacher",
+                how_step1_title: "Sprechen, fotografieren oder tippen",
+                how_step1_desc: "Sagen Sie \u201eMittagessen 12\u20ac\u201c, fotografieren Sie den Beleg, oder tippen Sie es ein.",
+                how_step2_title: "KI analysiert",
+                how_step2_desc: "KI erkennt Betrag, Kategorie und Konto. Fragt nach, wenn Details fehlen.",
+                how_step3_title: "Ein Tipp best\u00e4tigen",
+                how_step3_desc: "Best\u00e4tigen und fertig. Kontost\u00e4nde und Kartenrechnungen werden automatisch aktualisiert.",
+                ai_tag: "Konversations-KI",
+                ai_title: "Finanzen per Chat verwalten",
+                ai_desc: "Sagen Sie \u201e200\u20ac mit der Visa-Karte\u201c und Finboo erkennt die Karte, bucht die Ausgabe und aktualisiert den offenen Betrag.",
+                ai_f1: "Echtzeit-Spracherkennung",
+                ai_f2: "7 Belegtypen OCR",
+                ai_f3: "Smarte Mehrdeutigkeitsaufl\u00f6sung",
+                ai_f4: "Auto-Zuordnung Konten & Karten",
+                feat_tag: "Kernfunktionen",
+                feat_title: "Alle Finanztools, die Sie brauchen",
+                feat_subtitle: "Von t\u00e4glichen Ausgaben bis zur Investmentverfolgung \u2014 alles abgedeckt.",
+                f1_title: "13 Kontotypen",
+                f1_desc: "Bank, Bargeld, E-Wallet, Kreditkarte, Darlehen, Hypothek, Sparen, Krypto und mehr.",
+                f2_title: "Kreditkarten-Manager",
+                f2_desc: "Ausgaben pro Karte, Saldo-Tracking, automatische Voll-/Mindestzahlung.",
+                f3_title: "Investment-Tracking",
+                f3_desc: "Aktien, ETFs, Fonds, Anleihen, Krypto, Optionen. Echtzeitpreise.",
+                f4_title: "15 W\u00e4hrungen",
+                f4_desc: "EUR, USD, GBP, JPY, CNY und mehr. Echtzeit-Wechselkurse.",
+                f5_title: "Smarte Budgets",
+                f5_desc: "Monatsbudgets nach Kategorie, \u00dcberschreitungsalarme, Gesundheits-Score.",
+                f6_title: "Auto-Zahlung & Einkommen",
+                f6_desc: "Gehalt, Rente, Miete automatisch erfasst. Darlehen & Abos automatisch abgebucht.",
+                privacy_tag: "Datenschutz",
+                privacy_title: "Ihre Finanzdaten geh\u00f6ren nur Ihnen",
+                privacy_subtitle: "Privacy by Design \u2014 in jede Ebene integriert.",
+                priv1_title: "Ger\u00e4te-Sprache",
+                priv1_desc: "Apple Speech Framework verarbeitet lokal. Keine Audio-Uploads.",
+                priv2_title: "Lokale OCR",
+                priv2_desc: "Apple Vision Framework scannt Belege komplett auf dem Ger\u00e4t.",
+                priv3_title: "Apple-Anmeldung",
+                priv3_desc: "Keine Extra-Registrierung. Gesch\u00fctzt durch Apple-Datenschutzstandards.",
+                priv4_title: "Datenisolierung",
+                priv4_desc: "Alle Daten strikt nach Benutzer-ID getrennt. Nur Sie haben Zugriff.",
+                lang_title: "7 Sprachen",
+                lang_desc: "Deutsch \u2022 English \u2022 \u4e2d\u6587 \u2022 \u65e5\u672c\u8a9e \u2022 \ud55c\uad6d\uc5b4 \u2022 Fran\u00e7ais \u2022 Espa\u00f1ol",
+                cta_title_1: "Bereit, KI Ihre Finanzen verwalten zu lassen?",
+                cta_title_2: "Laden Sie Finboo jetzt herunter.",
+                cta_desc: "Starten Sie kostenlos. Erleben Sie smarte KI-Buchhaltung.",
+                cta_btn: "Kostenlos herunterladen",
+                footer_copyright: "\u00a9 2025 Finboo. Alle Rechte vorbehalten.",
+                footer_privacy: "Datenschutzrichtlinie",
+                footer_terms: "Nutzungsbedingungen",
+                footer_support: "Hilfe & Support"
+            },
+            es: {
+                nav_features: "Funciones",
+                nav_howitworks: "C\u00f3mo funciona",
+                nav_privacy: "Privacidad",
+                nav_download: "Descargar",
+                hero_badge: "Impulsado por IA \u2022 7 idiomas",
+                hero_title_1: "Solo d\u00edlo.",
+                hero_title_2: "La IA registra todo.",
+                hero_subtitle: "Voz, foto o texto \u2014 tres formas de contabilidad inteligente. Tarjetas, inversiones, multidivisa, presupuestos \u2014 todo en una app.",
+                btn_appstore: "App Store",
+                btn_learnmore: "Saber m\u00e1s",
+                hero_trust: "Reconocimiento de voz local \u2022 OCR local \u2022 Privacidad primero",
+                how_tag: "Tres pasos simples",
+                how_title: "La contabilidad nunca fue tan f\u00e1cil",
+                how_step1_title: "Habla, fotograf\u00eda o escribe",
+                how_step1_desc: "Di \u201calmuerzo 12\u20ac\u201d, fotografía el recibo, o escríbelo directamente.",
+                how_step2_title: "La IA analiza",
+                how_step2_desc: "La IA detecta monto, categoría y cuenta. Pregunta si faltan detalles.",
+                how_step3_title: "Confirma con un toque",
+                how_step3_desc: "Confirma y listo. Saldos y facturas de tarjetas se actualizan automáticamente.",
+                ai_tag: "IA Conversacional",
+                ai_title: "Gestiona finanzas conversando",
+                ai_desc: "Di \u201c200\u20ac con la Visa\u201d y Finboo identifica la tarjeta, registra el gasto y actualiza el saldo pendiente.",
+                ai_f1: "Reconocimiento de voz en tiempo real",
+                ai_f2: "OCR de 7 tipos de recibos",
+                ai_f3: "Desambiguación inteligente",
+                ai_f4: "Auto-coincidencia de cuentas y tarjetas",
+                feat_tag: "Funciones clave",
+                feat_title: "Todas las herramientas financieras que necesitas",
+                feat_subtitle: "Desde gastos diarios hasta seguimiento de inversiones, todo cubierto.",
+                f1_title: "13 tipos de cuentas",
+                f1_desc: "Banco, efectivo, billetera digital, tarjeta, préstamo, hipoteca, ahorro, crypto y más.",
+                f2_title: "Gestor de tarjetas",
+                f2_desc: "Gastos por tarjeta, seguimiento de saldo, pago automático completo o mínimo.",
+                f3_title: "Seguimiento de inversiones",
+                f3_desc: "Acciones, ETFs, fondos, bonos, crypto, opciones. Precios en tiempo real.",
+                f4_title: "15 monedas",
+                f4_desc: "EUR, USD, GBP, JPY, CNY y más. Tipos de cambio en tiempo real.",
+                f5_title: "Presupuestos inteligentes",
+                f5_desc: "Presupuestos mensuales por categoría, alertas de exceso, puntuación de salud.",
+                f6_title: "Pagos e ingresos auto",
+                f6_desc: "Salario, pensión, alquiler registrados automáticamente. Préstamos y suscripciones auto-debitados.",
+                privacy_tag: "Privacidad",
+                privacy_title: "Tus datos financieros son solo tuyos",
+                privacy_subtitle: "Privacidad por diseño \u2014 integrada en cada capa.",
+                priv1_title: "Voz local",
+                priv1_desc: "Apple Speech Framework procesa localmente. Sin envío de audio.",
+                priv2_title: "OCR local",
+                priv2_desc: "Apple Vision Framework escanea recibos completamente en el dispositivo.",
+                priv3_title: "Inicio con Apple",
+                priv3_desc: "Sin registro extra. Protegido por los estándares de privacidad de Apple.",
+                priv4_title: "Aislamiento de datos",
+                priv4_desc: "Todos los datos estrictamente aislados por usuario. Solo tú puedes verlos.",
+                lang_title: "7 idiomas",
+                lang_desc: "Español \u2022 English \u2022 \u4e2d\u6587 \u2022 \u65e5\u672c\u8a9e \u2022 \ud55c\uad6d\uc5b4 \u2022 Fran\u00e7ais \u2022 Deutsch",
+                cta_title_1: "\u00bfListo para que la IA gestione tu dinero?",
+                cta_title_2: "Descarga Finboo ahora.",
+                cta_desc: "Empieza gratis. Experimenta la contabilidad inteligente con IA.",
+                cta_btn: "Descarga gratis",
+                footer_copyright: "\u00a9 2025 Finboo. Todos los derechos reservados.",
+                footer_privacy: "Pol\u00edtica de privacidad",
+                footer_terms: "T\u00e9rminos de servicio",
+                footer_support: "Ayuda y soporte"
+            }
+        };
+
+        function setLanguage(lang) {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (TRANSLATIONS[lang] && TRANSLATIONS[lang][key]) {
+                    el.innerHTML = TRANSLATIONS[lang][key];
+                }
+            });
+            document.documentElement.lang = lang;
+            const langNames = { zh: '中文', en: 'English', de: 'Deutsch', ja: '日本語', ko: '한국어', fr: 'Français', es: 'Español' };
+            document.getElementById('current-lang').textContent = langNames[lang];
+        }
+
+        function toggleMobileMenu() {
+            document.getElementById('mobile-menu').classList.toggle('active');
+        }
+    </script>
+</head>
+
+<body class="bg-navy-900 text-white font-sans antialiased overflow-x-hidden">
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 bg-navy-900/80 backdrop-blur-md border-b border-white/10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0 flex items-center gap-2">
+                    <img class="h-8 w-auto rounded-lg" src="assets/logo.png" alt="Finboo Logo">
+                    <span class="text-xl font-bold tracking-tight">Finboo</span>
+                </div>
+                <!-- Mobile menu button -->
+                <button onclick="toggleMobileMenu()" class="md:hidden p-2 rounded-md text-gray-300 hover:text-white">
+                    <i data-lucide="menu" class="h-6 w-6"></i>
+                </button>
+                <!-- Desktop Nav -->
+                <div class="hidden md:flex items-center space-x-6">
+                    <a href="#features" class="hover:text-teal-500 transition-colors text-sm font-medium" data-i18n="nav_features">功能</a>
+                    <a href="#howitworks" class="hover:text-teal-500 transition-colors text-sm font-medium" data-i18n="nav_howitworks">使用方式</a>
+                    <a href="#privacy" class="hover:text-teal-500 transition-colors text-sm font-medium" data-i18n="nav_privacy">隐私安全</a>
+                    <!-- Language Switcher -->
+                    <div class="relative lang-btn group cursor-pointer px-2 py-2">
+                        <span class="flex items-center text-sm font-medium text-gray-300 hover:text-white">
+                            <i data-lucide="globe" class="w-4 h-4 mr-1"></i>
+                            <span id="current-lang">中文</span>
+                        </span>
+                        <div class="lang-dropdown shadow-xl">
+                            <div class="py-1">
+                                <a onclick="setLanguage('zh')" class="block px-4 py-2 text-sm text-gray-300 hover:bg-white/10 hover:text-white cursor-pointer">中文</a>
+                                <a onclick="setLanguage('en')" class="block px-4 py-2 text-sm text-gray-300 hover:bg-white/10 hover:text-white cursor-pointer">English</a>
+                                <a onclick="setLanguage('ja')" class="block px-4 py-2 text-sm text-gray-300 hover:bg-white/10 hover:text-white cursor-pointer">日本語</a>
+                                <a onclick="setLanguage('ko')" class="block px-4 py-2 text-sm text-gray-300 hover:bg-white/10 hover:text-white cursor-pointer">한국어</a>
+                                <a onclick="setLanguage('fr')" class="block px-4 py-2 text-sm text-gray-300 hover:bg-white/10 hover:text-white cursor-pointer">Français</a>
+                                <a onclick="setLanguage('de')" class="block px-4 py-2 text-sm text-gray-300 hover:bg-white/10 hover:text-white cursor-pointer">Deutsch</a>
+                                <a onclick="setLanguage('es')" class="block px-4 py-2 text-sm text-gray-300 hover:bg-white/10 hover:text-white cursor-pointer">Español</a>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="#download" class="bg-teal-600 hover:bg-teal-500 text-white px-5 py-2 rounded-full text-sm font-medium transition-colors" data-i18n="nav_download">下载 App</a>
+                </div>
+            </div>
+            <!-- Mobile Menu -->
+            <div id="mobile-menu" class="mobile-menu md:hidden pb-4 space-y-2">
+                <a href="#features" class="block px-3 py-2 text-gray-300 hover:text-white text-sm" data-i18n="nav_features">功能</a>
+                <a href="#howitworks" class="block px-3 py-2 text-gray-300 hover:text-white text-sm" data-i18n="nav_howitworks">使用方式</a>
+                <a href="#privacy" class="block px-3 py-2 text-gray-300 hover:text-white text-sm" data-i18n="nav_privacy">隐私安全</a>
+                <a href="#download" class="block px-3 py-2 text-teal-400 text-sm font-medium" data-i18n="nav_download">下载 App</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ==================== HERO ==================== -->
+    <section class="relative pt-28 pb-20 sm:pt-36 sm:pb-28 overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="lg:grid lg:grid-cols-12 lg:gap-12 items-center">
+                <div class="lg:col-span-6 text-center lg:text-left">
+                    <!-- Badge -->
+                    <div class="inline-flex items-center px-3 py-1 rounded-full border border-teal-500/30 bg-teal-500/10 text-teal-400 text-xs font-semibold uppercase tracking-wide mb-6">
+                        <span class="flex h-2 w-2 rounded-full bg-teal-400 mr-2 animate-pulse"></span>
+                        <span data-i18n="hero_badge">AI 驱动 &bull; 7种语言</span>
+                    </div>
+                    <!-- Title -->
+                    <h1 class="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight leading-tight">
+                        <span data-i18n="hero_title_1">说一句话</span><br>
+                        <span class="gradient-text" data-i18n="hero_title_2">AI帮你记好每一笔账</span>
+                    </h1>
+                    <p class="mt-6 text-lg text-gray-300 max-w-xl mx-auto lg:mx-0" data-i18n="hero_subtitle">
+                        语音、拍照、打字，三种方式智能记账。信用卡、投资、多币种、预算，一个App全搞定。
+                    </p>
+                    <!-- CTA -->
+                    <div class="mt-8 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                        <a href="#download" class="inline-flex items-center justify-center px-8 py-3.5 bg-teal-600 hover:bg-teal-500 text-white font-medium rounded-xl transition-all shadow-lg shadow-teal-500/20 text-base">
+                            <i data-lucide="apple" class="mr-2 h-5 w-5"></i>
+                            <span data-i18n="btn_appstore">App Store 下载</span>
+                        </a>
+                        <a href="#howitworks" class="inline-flex items-center justify-center px-8 py-3.5 border border-white/20 text-gray-300 bg-white/5 hover:bg-white/10 font-medium rounded-xl backdrop-blur-sm transition-all text-base" data-i18n="btn_learnmore">
+                            了解更多
+                        </a>
+                    </div>
+                    <!-- Trust -->
+                    <p class="mt-5 text-sm text-gray-500 flex items-center justify-center lg:justify-start gap-1">
+                        <i data-lucide="shield-check" class="h-4 w-4 text-teal-600"></i>
+                        <span data-i18n="hero_trust">设备端语音识别 &bull; 本地OCR &bull; 隐私优先</span>
+                    </p>
+                </div>
+                <!-- Hero Image -->
+                <div class="mt-14 lg:mt-0 lg:col-span-6 flex justify-center">
+                    <div class="relative w-full max-w-md">
+                        <div class="glass-card rounded-3xl overflow-hidden p-2 shadow-2xl">
+                            <img class="w-full rounded-2xl" src="assets/app_mockup_hero.png" alt="Finboo App">
+                        </div>
+                        <div class="absolute -top-16 -right-16 w-56 h-56 bg-teal-500/20 rounded-full blur-3xl"></div>
+                        <div class="absolute -bottom-16 -left-16 w-56 h-56 bg-purple-500/15 rounded-full blur-3xl"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- BG -->
+        <div class="absolute top-0 left-0 w-full h-full -z-10 overflow-hidden">
+            <div class="absolute -top-[30%] -left-[10%] w-[70%] h-[70%] bg-teal-900/20 rounded-full blur-[120px]"></div>
+            <div class="absolute top-[20%] right-0 w-[50%] h-[50%] bg-blue-900/20 rounded-full blur-[100px]"></div>
+        </div>
+    </section>
+
+    <!-- ==================== HOW IT WORKS ==================== -->
+    <section id="howitworks" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Header -->
+            <div class="text-center mb-16">
+                <div class="inline-flex items-center px-4 py-1.5 rounded-full border border-teal-500/30 bg-teal-500/10 text-teal-400 text-sm font-bold tracking-wide mb-4">
+                    <span data-i18n="how_tag">三步完成记账</span>
+                </div>
+                <h2 class="text-3xl sm:text-4xl font-extrabold text-white" data-i18n="how_title">记账从未如此简单</h2>
+            </div>
+            <!-- Steps -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 relative">
+                <!-- Connecting line (desktop only) -->
+                <div class="hidden md:block absolute top-12 left-[calc(16.67%+24px)] right-[calc(16.67%+24px)] h-0.5 bg-gradient-to-r from-teal-500/30 via-teal-500/50 to-teal-500/30"></div>
+                <!-- Step 1 -->
+                <div class="text-center relative">
+                    <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-teal-500 text-white text-xl font-bold mb-6 relative z-10">1</div>
+                    <div class="glass-card rounded-2xl p-6">
+                        <div class="flex justify-center gap-3 mb-4">
+                            <div class="w-10 h-10 rounded-xl bg-teal-500/20 flex items-center justify-center"><i data-lucide="mic" class="h-5 w-5 text-teal-400"></i></div>
+                            <div class="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center"><i data-lucide="camera" class="h-5 w-5 text-purple-400"></i></div>
+                            <div class="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center"><i data-lucide="keyboard" class="h-5 w-5 text-blue-400"></i></div>
+                        </div>
+                        <h3 class="text-lg font-bold text-white mb-2" data-i18n="how_step1_title">说、拍、或打字</h3>
+                        <p class="text-sm text-gray-400" data-i18n="how_step1_desc">语音说"午餐花了35"、拍下外卖小票、或直接打字输入，任选其一。</p>
+                    </div>
+                </div>
+                <!-- Step 2 -->
+                <div class="text-center relative">
+                    <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-teal-500 text-white text-xl font-bold mb-6 relative z-10">2</div>
+                    <div class="glass-card rounded-2xl p-6">
+                        <div class="flex justify-center mb-4">
+                            <div class="w-10 h-10 rounded-xl bg-yellow-500/20 flex items-center justify-center"><i data-lucide="sparkles" class="h-5 w-5 text-yellow-400"></i></div>
+                        </div>
+                        <h3 class="text-lg font-bold text-white mb-2" data-i18n="how_step2_title">AI 智能解析</h3>
+                        <p class="text-sm text-gray-400" data-i18n="how_step2_desc">AI自动识别金额、分类、账户，信息不全时会像助理一样追问确认。</p>
+                    </div>
+                </div>
+                <!-- Step 3 -->
+                <div class="text-center relative">
+                    <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-teal-500 text-white text-xl font-bold mb-6 relative z-10">3</div>
+                    <div class="glass-card rounded-2xl p-6">
+                        <div class="flex justify-center mb-4">
+                            <div class="w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center"><i data-lucide="check-circle" class="h-5 w-5 text-green-400"></i></div>
+                        </div>
+                        <h3 class="text-lg font-bold text-white mb-2" data-i18n="how_step3_title">一键确认</h3>
+                        <p class="text-sm text-gray-400" data-i18n="how_step3_desc">确认后自动记录，账户余额、信用卡待还金额同步更新，无需手动计算。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== AI DETAIL ==================== -->
+    <section class="py-24 relative overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="lg:grid lg:grid-cols-2 lg:gap-16 items-center">
+                <!-- Image -->
+                <div class="relative z-10">
+                    <div class="glass-card rounded-3xl overflow-hidden p-2 shadow-2xl border border-teal-500/20">
+                        <img src="assets/ai_demo.png" alt="AI Demo" class="w-full rounded-2xl">
+                    </div>
+                    <div class="absolute -inset-4 bg-teal-500/15 blur-3xl -z-10 rounded-full"></div>
+                </div>
+                <!-- Content -->
+                <div class="mt-12 lg:mt-0">
+                    <div class="inline-flex items-center px-4 py-1.5 rounded-full border border-purple-500/30 bg-purple-500/10 text-purple-300 text-sm font-bold tracking-wide mb-6">
+                        <i data-lucide="sparkles" class="w-4 h-4 mr-2"></i>
+                        <span data-i18n="ai_tag">对话式AI记账</span>
+                    </div>
+                    <h2 class="text-3xl md:text-4xl font-bold text-white mb-6 leading-tight" data-i18n="ai_title">像聊天一样管理财务</h2>
+                    <p class="text-lg text-gray-300 mb-8" data-i18n="ai_desc">
+                        不只是简单记录，Finboo AI 理解你的意图。说"招商信用卡消费200"，自动匹配信用卡、记录消费、更新待还金额。提到不存在的账户？AI引导创建并自动补录交易。
+                    </p>
+                    <ul class="space-y-4">
+                        <li class="flex items-center">
+                            <div class="flex-shrink-0 h-8 w-8 rounded-lg bg-teal-500/20 flex items-center justify-center mr-3">
+                                <i data-lucide="mic" class="h-4 w-4 text-teal-400"></i>
+                            </div>
+                            <span class="text-gray-300" data-i18n="ai_f1">语音实时转文字（Apple Speech）</span>
+                        </li>
+                        <li class="flex items-center">
+                            <div class="flex-shrink-0 h-8 w-8 rounded-lg bg-purple-500/20 flex items-center justify-center mr-3">
+                                <i data-lucide="scan" class="h-4 w-4 text-purple-400"></i>
+                            </div>
+                            <span class="text-gray-300" data-i18n="ai_f2">7种票据OCR识别（Apple Vision）</span>
+                        </li>
+                        <li class="flex items-center">
+                            <div class="flex-shrink-0 h-8 w-8 rounded-lg bg-blue-500/20 flex items-center justify-center mr-3">
+                                <i data-lucide="message-circle" class="h-4 w-4 text-blue-400"></i>
+                            </div>
+                            <span class="text-gray-300" data-i18n="ai_f3">智能消歧与多轮对话</span>
+                        </li>
+                        <li class="flex items-center">
+                            <div class="flex-shrink-0 h-8 w-8 rounded-lg bg-orange-500/20 flex items-center justify-center mr-3">
+                                <i data-lucide="link" class="h-4 w-4 text-orange-400"></i>
+                            </div>
+                            <span class="text-gray-300" data-i18n="ai_f4">自动匹配账户与信用卡</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== FEATURES GRID ==================== -->
+    <section id="features" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Header -->
+            <div class="text-center mb-16">
+                <span class="text-teal-400 font-semibold text-sm uppercase tracking-wide" data-i18n="feat_tag">核心功能</span>
+                <h2 class="mt-2 text-3xl sm:text-4xl font-extrabold text-white" data-i18n="feat_title">你需要的财务工具，全都在这里</h2>
+                <p class="mt-4 text-xl text-gray-400 max-w-2xl mx-auto" data-i18n="feat_subtitle">从日常记账到投资追踪，从信用卡管理到跨境汇率，一站式覆盖。</p>
+            </div>
+            <!-- Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- 1: Accounts -->
+                <div class="feature-card glass-card rounded-2xl p-6">
+                    <div class="flex items-center justify-center h-12 w-12 rounded-xl bg-teal-500 text-white shadow-lg mb-5">
+                        <i data-lucide="landmark" class="h-6 w-6"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2" data-i18n="f1_title">13种账户管理</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed" data-i18n="f1_desc">银行卡、现金、数字钱包、信用卡、贷款、房贷、储蓄、加密货币、房产、车辆等，全方位资产管理。</p>
+                </div>
+                <!-- 2: Credit Card -->
+                <div class="feature-card glass-card rounded-2xl p-6">
+                    <div class="flex items-center justify-center h-12 w-12 rounded-xl bg-purple-500 text-white shadow-lg mb-5">
+                        <i data-lucide="credit-card" class="h-6 w-6"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2" data-i18n="f2_title">信用卡智能管家</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed" data-i18n="f2_desc">每张卡独立消费记录，实时追踪待还金额。支持全额/最低自动还款，多来源扣款优先级。</p>
+                </div>
+                <!-- 3: Investment -->
+                <div class="feature-card glass-card rounded-2xl p-6">
+                    <div class="flex items-center justify-center h-12 w-12 rounded-xl bg-blue-500 text-white shadow-lg mb-5">
+                        <i data-lucide="trending-up" class="h-6 w-6"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2" data-i18n="f3_title">投资持仓追踪</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed" data-i18n="f3_desc">股票、ETF、基金、债券、加密货币、期权。实时价格更新，自动计算盈亏与平均成本。</p>
+                </div>
+                <!-- 4: Currency -->
+                <div class="feature-card glass-card rounded-2xl p-6">
+                    <div class="flex items-center justify-center h-12 w-12 rounded-xl bg-orange-500 text-white shadow-lg mb-5">
+                        <i data-lucide="coins" class="h-6 w-6"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2" data-i18n="f4_title">15种货币支持</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed" data-i18n="f4_desc">CNY、USD、EUR、JPY、HKD等15种主流货币，实时汇率自动转换，轻松记录海外消费。</p>
+                </div>
+                <!-- 5: Budget -->
+                <div class="feature-card glass-card rounded-2xl p-6">
+                    <div class="flex items-center justify-center h-12 w-12 rounded-xl bg-green-600 text-white shadow-lg mb-5">
+                        <i data-lucide="pie-chart" class="h-6 w-6"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2" data-i18n="f5_title">智能预算管理</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed" data-i18n="f5_desc">按分类设置月度预算，超支即时提醒。收支统计报表，财务健康度评分一目了然。</p>
+                </div>
+                <!-- 6: Auto -->
+                <div class="feature-card glass-card rounded-2xl p-6">
+                    <div class="flex items-center justify-center h-12 w-12 rounded-xl bg-indigo-500 text-white shadow-lg mb-5">
+                        <i data-lucide="repeat" class="h-6 w-6"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2" data-i18n="f6_title">自动还款与收入</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed" data-i18n="f6_desc">工资、公积金、租金自动入账；贷款、房贷、订阅自动扣款。余额不足时智能切换来源。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== PRIVACY ==================== -->
+    <section id="privacy" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Header -->
+            <div class="text-center mb-16">
+                <div class="inline-flex items-center px-4 py-1.5 rounded-full border border-green-500/30 bg-green-500/10 text-green-400 text-sm font-bold tracking-wide mb-4">
+                    <i data-lucide="shield-check" class="w-4 h-4 mr-2"></i>
+                    <span data-i18n="privacy_tag">隐私与安全</span>
+                </div>
+                <h2 class="text-3xl sm:text-4xl font-extrabold text-white" data-i18n="privacy_title">你的财务数据，只属于你</h2>
+                <p class="mt-4 text-xl text-gray-400 max-w-2xl mx-auto" data-i18n="privacy_subtitle">我们把隐私保护放在产品设计的第一位。</p>
+            </div>
+            <!-- Privacy Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="glass-card rounded-2xl p-6 text-center">
+                    <div class="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-teal-500/20 text-teal-400 mb-4">
+                        <i data-lucide="mic-off" class="h-6 w-6"></i>
+                    </div>
+                    <h3 class="text-base font-bold text-white mb-2" data-i18n="priv1_title">设备端语音识别</h3>
+                    <p class="text-sm text-gray-400" data-i18n="priv1_desc">使用 Apple Speech Framework，语音在本地处理，录音不上传服务器。</p>
+                </div>
+                <div class="glass-card rounded-2xl p-6 text-center">
+                    <div class="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-purple-500/20 text-purple-400 mb-4">
+                        <i data-lucide="scan" class="h-6 w-6"></i>
+                    </div>
+                    <h3 class="text-base font-bold text-white mb-2" data-i18n="priv2_title">本地票据OCR</h3>
+                    <p class="text-sm text-gray-400" data-i18n="priv2_desc">使用 Apple Vision Framework，小票识别完全在设备端完成。</p>
+                </div>
+                <div class="glass-card rounded-2xl p-6 text-center">
+                    <div class="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-blue-500/20 text-blue-400 mb-4">
+                        <i data-lucide="fingerprint" class="h-6 w-6"></i>
+                    </div>
+                    <h3 class="text-base font-bold text-white mb-2" data-i18n="priv3_title">Apple 登录</h3>
+                    <p class="text-sm text-gray-400" data-i18n="priv3_desc">支持 Sign in with Apple，无需额外注册，保护你的身份信息。</p>
+                </div>
+                <div class="glass-card rounded-2xl p-6 text-center">
+                    <div class="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-green-500/20 text-green-400 mb-4">
+                        <i data-lucide="lock" class="h-6 w-6"></i>
+                    </div>
+                    <h3 class="text-base font-bold text-white mb-2" data-i18n="priv4_title">数据隔离</h3>
+                    <p class="text-sm text-gray-400" data-i18n="priv4_desc">所有数据通过用户ID严格隔离，你的财务信息只有你能看到。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== LANGUAGE BANNER ==================== -->
+    <section class="py-12">
+        <div class="max-w-4xl mx-auto px-4 text-center">
+            <div class="glass-card rounded-2xl py-8 px-6">
+                <div class="flex items-center justify-center gap-2 mb-3">
+                    <i data-lucide="globe" class="h-5 w-5 text-teal-400"></i>
+                    <h3 class="text-lg font-bold text-white" data-i18n="lang_title">支持7种语言</h3>
+                </div>
+                <p class="text-gray-400" data-i18n="lang_desc">中文 &bull; English &bull; 日本語 &bull; 한국어 &bull; Fran&ccedil;ais &bull; Deutsch &bull; Espa&ntilde;ol</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== CTA ==================== -->
+    <section id="download" class="py-20">
+        <div class="max-w-4xl mx-auto px-4">
+            <div class="bg-gradient-to-br from-teal-600 to-teal-700 rounded-3xl py-16 px-8 text-center relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+                <div class="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2"></div>
+                <div class="relative z-10">
+                    <h2 class="text-3xl sm:text-4xl font-extrabold text-white mb-2" data-i18n="cta_title_1">准备好让AI帮你管好每一笔钱了吗？</h2>
+                    <p class="text-xl text-teal-100 mb-6" data-i18n="cta_title_2">立即下载 Finboo。</p>
+                    <p class="text-teal-200 mb-8" data-i18n="cta_desc">免费开始使用，体验AI智能记账的便捷。</p>
+                    <a href="#" class="inline-flex items-center px-8 py-3.5 bg-white text-teal-700 font-semibold rounded-xl hover:bg-teal-50 transition-colors shadow-lg">
+                        <i data-lucide="download" class="mr-2 h-5 w-5"></i>
+                        <span data-i18n="cta_btn">免费下载</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== FOOTER ==================== -->
+    <footer class="border-t border-white/10 py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+                <!-- Logo -->
+                <div class="flex items-center gap-2">
+                    <img class="h-7 w-auto rounded-lg" src="assets/logo.png" alt="Finboo">
+                    <span class="text-lg font-bold">Finboo</span>
+                </div>
+                <!-- Links -->
+                <div class="flex items-center gap-6 text-sm text-gray-400">
+                    <a href="#" class="hover:text-white transition-colors" data-i18n="footer_privacy">隐私政策</a>
+                    <a href="#" class="hover:text-white transition-colors" data-i18n="footer_terms">使用条款</a>
+                    <a href="#" class="hover:text-white transition-colors" data-i18n="footer_support">帮助与支持</a>
+                </div>
+                <!-- Copyright -->
+                <p class="text-sm text-gray-500" data-i18n="footer_copyright">&copy; 2025 Finboo. 保留所有权利。</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+
+</html>
